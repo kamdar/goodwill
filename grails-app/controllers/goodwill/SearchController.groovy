@@ -1,5 +1,15 @@
 package goodwill
 
+import groovyx.net.http.HTTPBuilder
+import groovyx.net.http.URIBuilder
+import static groovyx.net.http.ContentType.URLENC
+import static groovyx.net.http.ContentType.HTML
+import static groovyx.net.http.ContentType.TEXT
+import org.apache.http.HttpRequest
+import org.apache.http.HttpResponse
+import org.apache.http.protocol.HttpContext
+import org.apache.http.impl.client.DefaultRedirectHandler
+import org.apache.http.impl.cookie.BasicClientCookie
 import org.springframework.dao.DataIntegrityViolationException
 
 
@@ -36,7 +46,74 @@ class SearchController {
     
     def showMySearches()
     {
-        [mysearches : "nothing"]
+        def respString
+//        def http = new HTTPBuilder("https://www.shopgoodwill.com/buyers/dologin.asp")
+        def http = new HTTPBuilder("https://www.shopgoodwill.com/buyers/")
+        def postbody =  [buyerid: "test", buyerpasswd: "test", submit: "Sign In", state: "1", cookcheck: "1", redir: ""]
+        
+//        def cookie = new BasicClientCookie("ASPSESSIONIDQQAQACAS", "KANMPJODBHBLFPNDELHOCJFJ")
+//        http.client.cookieStore.addCookie(cookie)
+//        cookie = new BasicClientCookie("CookieTest", "ishere")
+//        http.client.cookieStore.addCookie(cookie)
+        
+//        def http = new HTTPBuilder("http://www.w3schools.com/TAGS/")
+//        def postbody =  [fname: "kamdar", lname: "pass"]
+        
+//        http.auth.basic "test", "mypass"
+
+        // didn't seem to work        
+//        http.client.setRedirectHandler(new DefaultRedirectHandler() {
+//              @Override
+//              boolean isRedirectedRequested(HttpResponse response, HttpContext context) {
+//                def redirected = super.isRedirectedRequested(response, context)
+//                return redirected || response.getStatusLine().getStatusCode() == 302
+//              }
+//        })
+
+        
+//        http.handler.'302' = { resp ->
+//            respString = " mememe "
+//            def headers = resp.headers
+//            respString += headers.'Location'
+//            def myUrl = new URIBuilder(headers.'Location')
+//            def queries = myUrl.query
+//            respString += " stuff is " + queries.'vMsgNum'
+//            }
+        
+        http.get( contentType: TEXT)
+        {resp ->
+                respString = "from get status is ${resp.statusLine}" 
+
+                resp.headers.each {
+                    respString +=it
+                    respString += "<p><br>"
+                }
+        }
+        
+        http.post( path: "dologin.asp", body: postbody, requestContentType: URLENC)
+            { resp ->
+                respString = "got the response from goodwill ${resp.statusLine}"
+                
+                resp.headers.each {
+                    respString +=it
+                    respString += "<p><br>"
+                }
+            }
+            
+            http.client.cookieStore.cookies.each {
+                respString += "$it.name : $it.value  | ${it.domain}${it.path}  |  $it.expiryDate" + "<br>"
+            }
+            
+//            http.post( path: "demo_form_method_post.asp", body: postbody, requestContentType: URLENC)
+//            { resp ->
+//                respString = "got the response from goodwill ${resp.statusLine}<p><br>"
+//                
+//                resp.headers.each {
+//                    respString += it
+//                }
+//            }
+
+        [mysearches : respString]
     }
 
     def list() {
